@@ -15,10 +15,15 @@ import {
 export function useAirlines() {
   const dispatch = useDispatch()
   const airlinesState = useSelector(state => state.airlines)
+  const { items, loading, lastFetched } = airlinesState
 
   useEffect(() => {
+    if (loading || items.length > 0 || lastFetched) {
+      return
+    }
+
     dispatch(fetchAirlines())
-  }, [dispatch])
+  }, [dispatch, items.length, lastFetched, loading])
 
   return {
     ...airlinesState,
