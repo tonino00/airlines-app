@@ -6,30 +6,34 @@
 
 ## Project
 
-**Name:** <FILL IN>
-**One-line purpose:** <FILL IN — e.g., "B2B invoice SaaS for Shopify merchants">
-**Stage:** <FILL IN — prototype / beta / production>
+**Name:** airlines-app
+**One-line purpose:** Frontend React para gerenciamento de airlines e airplanes, consumindo API REST legada
+**Stage:** prototype / building from scratch
 
 ## Stack
 
-- **Language(s):** <FILL IN>
-- **Framework:** <FILL IN>
-- **Database:** <FILL IN>
-- **Package manager:** <FILL IN — pnpm / uv / cargo / ...>
-- **Deploy target:** <FILL IN>
+- **Language(s):** JavaScript (ES2022+) → evoluindo para TypeScript
+- **Framework:** React 18+ (functional components + hooks)
+- **State management**: [Context API / Redux / Outro]
+- **Build tool:** Vite
+- **Styling**: [CSS Modules / Styled-components / Tailwind]
+- **Testing**: [Jest / React Testing Library]
+- **HTTP client:** Axios
+- **Package manager:** npm (ou pnpm)
+- **Deploy target:** Vercel / Netlify / Render (a definir)
 
 ## Commands
 
-| What | Command |
-|---|---|
-| Install | `<FILL IN>` |
-| Dev server | `<FILL IN>` |
-| Test | `<FILL IN>` |
-| Lint | `<FILL IN>` |
-| Typecheck | `<FILL IN>` |
-| Build | `<FILL IN>` |
+| What       | Command                                          |
+| ---------- | ------------------------------------------------ |
+| Install    | `npm install`                                    |
+| Dev server | `npm run dev`                                    |
+| Test       | `npm test` (Vitest + React Testing Library)      |
+| Lint       | `npm run lint` (ESLint)                          |
+| Typecheck  | `npm run type-check` (TypeScript, após migração) |
+| Build      | `npm run build`                                  |
 
-Run these *yourself* before declaring a task done. The reviewer and tester subagents will too.
+Run these _yourself_ before declaring a task done. The reviewer and tester subagents will too.
 
 ---
 
@@ -37,60 +41,100 @@ Run these *yourself* before declaring a task done. The reviewer and tester subag
 
 These are never negotiable. If a request would violate them, **ask first — don't silently proceed.**
 
-1. **Security.** No API key, token, or secret ever in logs, commits, tests, or error messages. PII never in logs. Run `.windsurf/hooks/secret_scan.py` before any commit.
-2. **Testing.** Every new public function gets a test. Coverage stays ≥ 80% on `src/`. Never weaken an existing test to make a change pass — fix the change.
-3. **API shape.** Every endpoint returns `{ ok: boolean, data?: T, error?: { code, message } }`. No exceptions.
-4. **Migrations.** Schema changes are always a two-phase deploy (expand → migrate → contract). No destructive migrations that can't be rolled back.
-5. **Dependencies.** No new dependency with < 6 months of commit history, < 100 stars, or unknown maintainer. If you must add one, justify it in the PR.
-6. **AI diffs.** Any Cascade-generated diff over 50 lines gets a `@reviewer` pass before commit. For production code, also a `@security` pass.
-7. **Docs.** If you change behaviour, you update docs. The `@docs` subagent runs at the end of every feature branch.
+1. **API contract.** Base URL: `https://airline-manager-23mn.onrender.com`. Endpoints: `GET/POST /airlines`, `GET/POST /airplanes`. Always handle 503 (unavailable) with retry + fallback. Never assume API is online.
+
+2. **Resilience.** Every API call must have: timeout (10s), retry mechanism (3 attempts), loading state, and user-friendly error message. Cache GET responses in localStorage with stale-while-revalidate.
+
+3. **Testing.** Every new component gets a test. Coverage stays ≥ 70% on critical paths (API integration, forms, navigation). Never remove a test without justification.
+
+4. **Component purity.** No side effects in render. All side effects go in `useEffect` or custom hooks. No direct DOM manipulation.
+
+5. **State management.** Local state = useState. Shared state = Context API (only if prop drilling > 3 levels). No Redux unless justified.
+
+6. **Accessibility.** All forms have labels. All interactive elements are keyboard-navigable. Use semantic HTML (button, form, ul, etc).
+
+7. **Error boundaries.** Each major feature (Airlines, Airplanes) wrapped in error boundary to prevent total UI crash.
+
+8. **Modern React.** No class components. No legacy lifecycle methods. Use hooks exclusively.
+
+9. **Code review.** Any AI-generated diff over 50 lines gets `@reviewer` pass before commit. Any change to API service layer gets `@security` pass.
+
+10. **Documentation.** Every component > 50 lines has JSDoc explaining props and behavior. Update README when adding new features.
 
 ---
 
 ## Directory Layout (What Lives Where)
 
-```
-<FILL IN — the 5-10 directories a new contributor would care about>
-```
+src/
+├── api/ # Axios config + API service methods (airlines, airplanes)
+├── components/ # Reusable UI components (Button, Card, FormInput, etc)
+│ └── common/ # Highly reusable (Modal, Spinner, ErrorBoundary)
+├── pages/ # Route-level components (AirlinesPage, AirplanesPage)
+├── hooks/ # Custom hooks (useAirlines, useAirplanes, useApi)
+├── utils/ # Helpers (error handling, formatters, localStorage)
+├── styles/ # Global CSS / Tailwind config
+├── mocks/ # Mock data for API offline development
+└── types/ # TypeScript interfaces (quando migrar)
 
-Example:
-```
-src/api/          # HTTP endpoints
-src/domain/       # Business logic, no I/O
-src/db/           # Schema + migrations
-tests/            # Jest + Playwright
-vault/            # Agentic wiki — read before starting any non-trivial task
-.windsurf/        # Agent configuration
-```
+tests/
+├── unit/ # Component + hook tests
+├── integration/ # API integration tests
+└── e2e/ # Playwright (future)
+
+vault/ # Agentic wiki — read before API/architecture changes
+.windsurf/ # Agent configuration (skills, hooks, workflows)
+plans/ # Implementation plans from @architect
+templates/ # Component templates (form, list, page)
+
+````
 
 ---
 
 ## Style
 
-- <FILL IN — language-specific conventions>
-- No comments on self-evident code. Only explain *why*, never *what*.
-- No `any` / `getattr` / catch-all types. If you're reaching for one, you don't understand the type yet.
-- Errors are values, not exceptions. (Adjust if your stack disagrees.)
-- Imports at top. Never import inside a function.
+- **Naming:** PascalCase for components, camelCase for functions/variables, kebab-case for CSS classes
+- **Formatting:** Prettier with defaults (single quotes, no semicolons, 2 spaces)
+- **Comments:** No comments on self-evident code. Only explain *why*, never *what*. JSDoc for public functions.
+- **Imports:** Group: React → libraries → internal modules → styles. No dynamic imports inside functions.
+- **Error handling:** Always `.catch()` promises or use try/catch in async functions. Never swallow errors silently.
+- **File structure:** One component per file. Export default for component, named exports for utils/hooks.
 
 ---
 
 ## Never Do
 
-- Commit to `main` / `master` directly — always a PR.
-- `git push --force` on shared branches. `--force-with-lease` on your own feature branch is fine.
-- Skip hooks (`--no-verify`) unless explicitly asked.
-- Add a dependency to solve a 10-line problem.
-- Delete or rewrite a migration that has run in production.
-- Log request bodies for endpoints that handle PII.
+- Commit API keys or secrets (use `.env` + `.gitignore`)
+- Hardcode URLs (use environment variables: `VITE_API_URL`)
+- `console.log` in production code (use `console.error` for errors, `console.warn` for warnings)
+- Directly mutate state (`state.push()`) — always use setter
+- Ignore failed API calls without user feedback
+- Nest ternary operators (> 1 level)
+- Use `any` (when TypeScript is added)
+- Force push to main branch
 
 ## Always Do
 
-- Read `vault/INDEX.md` before starting a non-trivial task — the wiki probably has context.
-- After a session that made a decision, added a fact, or fixed an incident — the `wiki-update` skill runs automatically via hook. If it doesn't, run it manually.
-- At PR time, run the `pr-ready` skill to polish the description + commits.
+- Extract magic strings/numbers to constants (e.g., `API_BASE_URL`, `MAX_RETRIES`)
+- Validate form inputs before sending to API
+- Show loading spinner during async operations
+- Handle offline mode gracefully (show cached data + warning banner)
+- Read `vault/INDEX.md` before changing API service layer or architecture
+- After adding a new feature, run `npm run lint` and `npm test` locally
+- Use `@reviewer` agent before committing any non-trivial change
 
 ---
+
+## API-Specific Rules (airlines-app)
+
+### Endpoints contract
+```javascript
+// Airlines
+GET  /airlines → { ok: true, data: Airline[] }
+POST /airlines → body: { name, code, country? } → { ok: true, data: Airline }
+
+// Airplanes
+GET  /airplanes → { ok: true, data: Airplane[] }
+POST /airplanes → body: { model, airlineId, capacity } → { ok: true, data: Airplane }
 
 ## Subagents
 
@@ -111,6 +155,18 @@ Run them in parallel via [Worktrees](https://github.com/OnlyTerp/windsurf-unlock
 
 ---
 
+## Migration Path
+
+1. Start: JavaScript + functional components + Vite
+2. Week 2: Add TypeScript (`.tsx`)
+3. Week 3: Add React Query for API caching
+4. Week 4: Add E2E tests (Playwright)
+5. Week 5: Deploy to Vercel with CI/CD
+
+Always maintain the ability to run with mocks (API offline mode).
+
+---
+
 ## Rules Loaded From
 
 - `AGENTS.md` (this file) — project rules, always loaded
@@ -120,3 +176,8 @@ Run them in parallel via [Worktrees](https://github.com/OnlyTerp/windsurf-unlock
 - Cascade Memories (personal, not committed) — loaded via Cascade UI
 
 If any of those contradict this file, **this file wins.**
+
+---
+
+**Last updated:** 2026-01-17
+````
