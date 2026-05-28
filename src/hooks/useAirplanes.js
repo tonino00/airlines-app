@@ -5,7 +5,8 @@ import {
   clearAirplanesError,
   clearAirplanesWarning,
   createAirplane,
-  fetchAirplanes
+  fetchAirplanes,
+  removeAirplane
 } from '../store/slices/airplanesSlice'
 
 /**
@@ -29,6 +30,7 @@ export function useAirplanes() {
     ...airplanesState,
     refreshAirplanes: () => dispatch(fetchAirplanes()),
     createAirplane: payload => dispatch(createAirplane(payload)).unwrap(),
+    removeAirplane: airplaneId => dispatch(removeAirplane(airplaneId)).unwrap(),
     clearError: () => dispatch(clearAirplanesError()),
     clearWarning: () => dispatch(clearAirplanesWarning())
   }

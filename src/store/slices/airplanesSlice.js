@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
-import { getAirplanes, postAirplane } from '../../api/airplanesApi'
+import { deleteAirplaneById, getAirplanes, postAirplane } from '../../api/airplanesApi'
 import { CACHE_KEYS } from '../../utils/constants'
 import { getUserFriendlyError } from '../../utils/errorHandling'
 import { getCacheEntry, setCacheEntry } from '../../utils/storage'
@@ -92,6 +92,25 @@ export const createAirplane = createAsyncThunk(
   }
 )
 
+/**
+ * Deletes an airplane and keeps cache-backed UI state in sync.
+ * @param {string} airplaneId
+ * @returns {Promise<string>}
+ */
+export const removeAirplane = createAsyncThunk(
+  'airplanes/removeAirplane',
+  async (airplaneId, { rejectWithValue }) => {
+    try {
+      await deleteAirplaneById(airplaneId)
+      return airplaneId
+    } catch (error) {
+      return rejectWithValue({
+        message: getUserFriendlyError(error)
+      })
+    }
+  }
+)
+
 const airplanesSlice = createSlice({
   name: 'airplanes',
   initialState,
@@ -133,6 +152,23 @@ const airplanesSlice = createSlice({
       .addCase(createAirplane.rejected, (state, action) => {
         state.submitting = false
         state.error = action.payload?.message ?? 'Failed to create airplane.'
+      })
+      .addCase(removeAirplane.pending, state => {
+        state.submitting = true
+        state.error = null
+      })
+      .addCase(removeAirplane.fulfilled, (state, action) => {
+        state.submitting = false
+        state.items = state.items.filter(airplane => {
+          const airplaneId = airplane?.oid || airplane?.id
+          return airplaneId !== action.payload
+        })
+        state.warning = null
+        setCacheEntry(CACHE_KEYS.airplanes, state.items)
+      })
+      .addCase(removeAirplane.rejected, (state, action) => {
+        state.submitting = false
+        state.error = action.payload?.message ?? 'Failed to delete airplane.'
       })
   }
 })

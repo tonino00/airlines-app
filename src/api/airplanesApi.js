@@ -35,3 +35,22 @@ export async function postAirplane(payload) {
   const response = await httpClient.post('/airplanes', payload)
   return response.data
 }
+
+/**
+ * Deletes an airplane by oid/id through the backend or local mock pipeline.
+ * @param {string} airplaneId
+ * @returns {Promise<{ ok: boolean, data: { oid: string } }>}
+ */
+export async function deleteAirplaneById(airplaneId) {
+  if (USE_MOCK) {
+    return {
+      ok: true,
+      data: {
+        oid: airplaneId
+      }
+    }
+  }
+
+  const response = await httpClient.delete(`/airplanes/${airplaneId}`)
+  return response.data
+}
